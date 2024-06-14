@@ -34,7 +34,7 @@ if df:
             placeholder="Select a location",
         )
 
-    tab1, tab2, tab3 = st.tabs(["Buyers", "Competition (Coming Soon)", "Teaming (Coming Soon)"])
+    tab1, tab2 = st.tabs(["Buyers", "Competition"])
 
     with tab1:
         if set_aside_option is None and not location_option:
@@ -80,8 +80,11 @@ if df:
         if dept_option is not None:
             agency_dept_df = grouped_df[grouped_df['Contracting Department Name'] == dept_option].groupby('Contracting Agency Name').agg({
                 'Dollars Obligated': 'sum',
-                'PIID': 'nunique'  # Count unique PIIDs
-            }).rename(columns={'PIID': 'Awards'}).reset_index()
+                'PIID': 'nunique',   # Count unique PIIDs
+                'Number of Offers Received': 'mean'
+            }).rename(columns={'PIID': 'Awards', 'Number of Offers Received': 'Average Offers'}).reset_index()
+
+            agency_dept_df['Average Offers'] = agency_dept_df['Average Offers'].round(0)
             top_agency_dept_df = agency_dept_df.nlargest(10, 'Dollars Obligated')
             st.write(top_agency_dept_df, index=False)
 
@@ -95,12 +98,12 @@ if df:
             columns = st.columns(2)
             with columns[0]:
                 if agency_option is not None:
-                    agency_df = grouped_df[grouped_df['Contracting Agency Name'] == agency_option].groupby('Approved By').agg({
+                    agency_df = grouped_df[grouped_df['Contracting Agency Name'] == agency_option].groupby(['Contracting Office Name', 'Approved By']).agg({
                         'Dollars Obligated': 'sum',
                         'PIID': 'nunique'  # Count unique PIIDs
                     }).rename(columns={'PIID': 'Awards'}).reset_index()
                 else:
-                    agency_df = grouped_df.groupby('Approved By').agg({
+                    agency_df = grouped_df.groupby(['Contracting Office Name', 'Approved By']).agg({
                         'Dollars Obligated': 'sum',
                         'PIID': 'nunique'  # Count unique PIIDs
                     }).rename(columns={'PIID': 'Awards'}).reset_index()
@@ -113,9 +116,4 @@ if df:
         
 
     with tab2:
-        st.write("Coming Soon")
-
-
-
-    with tab3:
         st.write("Coming Soon")
