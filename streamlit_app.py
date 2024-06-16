@@ -78,6 +78,7 @@ if df:
         )
 
         if dept_option is not None:
+            st.write("*Top Agencies*")
             agency_dept_df = grouped_df[grouped_df['Contracting Department Name'] == dept_option].groupby('Contracting Agency Name').agg({
                 'Dollars Obligated': 'sum',
                 'PIID': 'nunique',   # Count unique PIIDs
@@ -97,23 +98,46 @@ if df:
 
             columns = st.columns(2)
             with columns[0]:
+                st.write("*Top Offices*")
                 if agency_option is not None:
-                    agency_df = grouped_df[grouped_df['Contracting Agency Name'] == agency_option].groupby(['Contracting Office Name', 'Approved By']).agg({
+                    office_df = grouped_df[grouped_df['Contracting Agency Name'] == agency_option].groupby(['Contracting Office Name']).agg({
                         'Dollars Obligated': 'sum',
                         'PIID': 'nunique'  # Count unique PIIDs
                     }).rename(columns={'PIID': 'Awards'}).reset_index()
                 else:
-                    agency_df = grouped_df.groupby(['Contracting Office Name', 'Approved By']).agg({
+                    office_df = grouped_df.groupby(['Contracting Office Name']).agg({
                         'Dollars Obligated': 'sum',
                         'PIID': 'nunique'  # Count unique PIIDs
                     }).rename(columns={'PIID': 'Awards'}).reset_index()
                     
-                top_buyer_df = agency_df.nlargest(100, 'Dollars Obligated').reset_index(drop=True)
-                st.write(top_buyer_df, index=False)
+                top_office_df = office_df.nlargest(100, 'Dollars Obligated').reset_index(drop=True)
+                st.write(top_office_df, index=False)
 
             with columns[1]:
-                st.write("*Note*: here are the email addresses or beginnings of emails for the buyers in the selected office who are buying the most of what you sell.")
-        
+                
+                # select office
+                office_option = st.selectbox(
+                    "Select office in " + agency_option,
+                    top_office_df,
+                    index=None,
+                    placeholder="Select an office",
+                )
+                
+                if office_option is not None:
+                    st.write("*Buyers across office*")
+                    office_df = grouped_df[grouped_df['Contracting Office Name'] == office_option].groupby(['Approved By']).agg({
+                        'Dollars Obligated': 'sum',
+                        'PIID': 'nunique'  # Count unique PIIDs
+                    }).rename(columns={'PIID': 'Awards'}).reset_index()
+                else: 
+                    st.write("*Buyers across agency*")
+                    office_df = grouped_df[grouped_df['Contracting Agency Name'] == agency_option].groupby(['Approved By']).agg({
+                        'Dollars Obligated': 'sum',
+                        'PIID': 'nunique'  # Count unique PIIDs
+                    }).rename(columns={'PIID': 'Awards', 'Contracting Office Name': 'Office'}).reset_index()
+
+                top_buyer_df = office_df.nlargest(100, 'Dollars Obligated').reset_index(drop=True)
+                st.write(top_buyer_df, index=False)
 
     with tab2:
         st.write("Coming Soon")
